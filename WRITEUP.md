@@ -1,1 +1,19 @@
-Rail-Drishti monitors Indian Railways track health by combining a scikit-learn defect classifier (trained on IRPWM-grounded synthetic data stored in Delta Lake) with a RAG pipeline that retrieves rules from the Permanent Way Manual and Schedule of Dimensions via FAISS, then generates structured maintenance action cards using Sarvam-1. Built on Databricks Free Edition serverless with Unity Catalog, PySpark, and MLflow — surfaced through a live Flask dashboard showing urgent segments with cited PWM rules and retrieval similarity scores.
+name: Keep-alive ping
+on:
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Timestamp ping
+        run: echo "Rail-Drishti active — $(date -u)" >> docs/PING.log
+      - name: Commit ping
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/PING.log
+          git diff --staged --quiet || git commit -m "chore: weekly keep-alive ping"
+          git push

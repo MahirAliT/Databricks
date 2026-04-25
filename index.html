@@ -1,0 +1,41 @@
+# Demo Video Script — Rail-Drishti (≤ 2 minutes)
+
+## Scene 1 — Context (0:00–0:15)
+**Narrate:** "Rail-Drishti monitors Indian Railways track health. It combines a Spark MLlib classifier
+with a RAG pipeline that cites actual maintenance manuals and generates maintenance action cards
+using Sarvam-1, India's own LLM — running entirely on Databricks Free Edition."
+
+## Scene 2 — MLflow experiment (0:15–0:35)
+- Open Databricks MLflow UI
+- Show experiment `rail_drishti_rag`
+- Click `faiss_index_build` run → show logged params (chunk_size=512, top_k=4, min_sim=0.35)
+- Show `track_index.bin` artifact logged
+
+## Scene 3 — Delta tables (0:35–0:50)
+- Open Databricks Data Explorer → catalog `bricksiitm` → schema `rail_drishti`
+- Show 4 tables: raw_docs, chunked_docs, embedded_docs, inference_log
+- Click `inference_log` → show a row with action_card, top_sim_score, top_chunk_sources
+
+## Scene 4 — Dashboard overview (0:50–1:10)
+- Open `http://localhost:8050`
+- Point to stat cards: total inferences, urgent count, watchlist count, avg sim score
+- Show defect breakdown section
+
+## Scene 5 — Segment detail (1:10–1:40)
+- Click an OVERDUE (red) segment row
+- Show triggered rules: e.g. "Tamping overdue 40d", "TGI critical (36.5)"
+- Expand inference log → show chunk sources (PWM page 142, SoD page 78)
+- Show Sarvam-1 generated action card with cited rule and officer responsibility
+
+## Scene 6 — Live inference (1:40–2:00)
+- Switch to notebook — run Cell 10 with a new thermal_stress + bridge segment
+- Reload dashboard → new OVERDUE row appears at top
+- "New inference logged with cosine similarity 0.61 from PWM Section 4.3"
+
+---
+
+## Key talking points
+- All data persists in Unity Catalog Delta — audit trail for every inference
+- FAISS index rebuilt from embedded_docs in <2 min if session restarts
+- Sarvam-1 chosen for Indian-context terminology in maintenance cards
+- No GPU required — MiniLM runs driver-side on serverless compute
