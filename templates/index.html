@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ── Reset & Base ────────────────────────────────────────────── */
+/* ── Reset & Base ─────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -45,22 +45,15 @@ body {
   overflow-x: hidden;
 }
 
-/* ── Scanline texture overlay ───────────────────────────────── */
 body::before {
   content: '';
   position: fixed; inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.04) 2px,
-    rgba(0,0,0,0.04) 4px
-  );
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
   pointer-events: none;
   z-index: 1000;
 }
 
-/* ── Header ─────────────────────────────────────────────────── */
+/* ── Header ──────────────────────────────────────────────────────────── */
 header {
   border-bottom: 1px solid var(--border);
   padding: 0 40px;
@@ -123,14 +116,13 @@ header {
 
 #last-updated { color: var(--muted); }
 
-/* ── Layout ─────────────────────────────────────────────────── */
+/* ── Layout ──────────────────────────────────────────────────────────── */
 main {
   max-width: 1400px;
   margin: 0 auto;
   padding: 32px 40px 80px;
 }
 
-/* ── Section label ──────────────────────────────────────────── */
 .section-label {
   font-size: 10px;
   letter-spacing: 0.2em;
@@ -148,7 +140,166 @@ main {
   background: var(--border);
 }
 
-/* ── Stat cards row ─────────────────────────────────────────── */
+/* ── Upload panel ────────────────────────────────────────────────────── */
+.upload-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+
+.upload-panel-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+/* Drop zone */
+.drop-zone {
+  border: 2px dashed var(--dim);
+  border-radius: var(--radius);
+  margin: 24px;
+  padding: 36px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  text-align: center;
+  min-height: 160px;
+  position: relative;
+}
+
+.drop-zone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.drop-zone.has-file {
+  border-color: var(--normal);
+  background: var(--norm-bg);
+}
+
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.drop-icon {
+  font-size: 28px;
+  opacity: 0.5;
+}
+
+.drop-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.drop-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.drop-file-name {
+  font-size: 11px;
+  color: var(--normal);
+  font-weight: 500;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Upload controls + status */
+.upload-controls {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-left: 1px solid var(--border);
+}
+
+.upload-meta {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.upload-meta span { color: var(--text); }
+
+.upload-btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--accent);
+  color: #0a0c0f;
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 20px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: opacity 0.15s;
+  align-self: flex-start;
+}
+.upload-btn:hover   { opacity: 0.85; }
+.upload-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Progress bar */
+.progress-wrap {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+.progress-wrap.visible { display: flex; }
+
+.progress-track {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.progress-fill.done  { background: var(--normal); }
+.progress-fill.error { background: var(--urgent); }
+
+.progress-msg {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.upload-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.upload-status-badge.processing { background: var(--accent-bg); color: var(--accent); }
+.upload-status-badge.done       { background: var(--norm-bg);   color: var(--normal); }
+.upload-status-badge.error      { background: var(--urgent-bg); color: var(--urgent); }
+
+/* ── Stat cards ──────────────────────────────────────────────────────── */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -165,7 +316,6 @@ main {
   overflow: hidden;
   transition: border-color 0.2s;
 }
-
 .stat-card:hover { border-color: var(--border2); }
 
 .stat-card::before {
@@ -203,12 +353,9 @@ main {
 .stat-card.normal   .stat-value { color: var(--normal); }
 .stat-card.info     .stat-value { color: var(--accent); }
 
-.stat-sub {
-  font-size: 11px;
-  color: var(--muted);
-}
+.stat-sub { font-size: 11px; color: var(--muted); }
 
-/* ── Defect bar chart ───────────────────────────────────────── */
+/* ── Defect bars ─────────────────────────────────────────────────────── */
 .defect-bars { margin-top: 12px; }
 
 .defect-row {
@@ -244,13 +391,9 @@ main {
   width: 0;
 }
 
-.defect-count {
-  width: 24px;
-  text-align: right;
-  color: var(--dim);
-}
+.defect-count { width: 24px; text-align: right; color: var(--dim); }
 
-/* ── Two-column layout ──────────────────────────────────────── */
+/* ── Two-column layout ───────────────────────────────────────────────── */
 .two-col {
   display: grid;
   grid-template-columns: 1fr 380px;
@@ -258,12 +401,8 @@ main {
   align-items: start;
 }
 
-/* ── Segment list ───────────────────────────────────────────── */
-#segment-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+/* ── Segment list ────────────────────────────────────────────────────── */
+#segment-list { display: flex; flex-direction: column; gap: 8px; }
 
 .seg-card {
   background: var(--bg2);
@@ -294,11 +433,7 @@ main {
   background: var(--bg3);
   transform: translateX(3px);
 }
-
-.seg-card.active {
-  border-color: var(--accent);
-  background: var(--bg3);
-}
+.seg-card.active { border-color: var(--accent); background: var(--bg3); }
 
 .seg-top {
   display: flex;
@@ -322,7 +457,6 @@ main {
   padding: 3px 8px;
   border-radius: 3px;
 }
-
 .tier-badge.OVERDUE  { background: var(--urgent-bg);  color: var(--urgent);   border: 1px solid rgba(232,64,64,0.25); }
 .tier-badge.ELEVATED { background: var(--elev-bg);    color: var(--elevated); border: 1px solid rgba(245,158,11,0.25); }
 .tier-badge.STANDARD { background: var(--norm-bg);    color: var(--normal);   border: 1px solid rgba(34,197,94,0.25); }
@@ -334,15 +468,10 @@ main {
   color: var(--muted);
   margin-bottom: 10px;
 }
-
 .seg-meta-item { display: flex; gap: 5px; align-items: center; }
 .seg-meta-val  { color: var(--text); }
 
-.seg-rules {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
+.seg-rules { display: flex; flex-wrap: wrap; gap: 5px; }
 
 .rule-pill {
   font-size: 10px;
@@ -353,7 +482,7 @@ main {
   border: 1px solid rgba(232,64,64,0.15);
 }
 
-/* ── Detail panel ───────────────────────────────────────────── */
+/* ── Detail panel ────────────────────────────────────────────────────── */
 #detail-panel {
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -376,10 +505,7 @@ main {
   font-size: 12px;
 }
 
-.detail-empty-icon {
-  font-size: 28px;
-  opacity: 0.3;
-}
+.detail-empty-icon { font-size: 28px; opacity: 0.3; }
 
 .detail-header {
   display: flex;
@@ -437,11 +563,7 @@ main {
   margin-bottom: 8px;
 }
 
-.inf-refs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
+.inf-refs { display: flex; flex-wrap: wrap; gap: 5px; }
 
 .ref-tag {
   font-size: 10px;
@@ -462,7 +584,7 @@ main {
   font-size: 12px;
 }
 
-/* ── Skeleton loader ─────────────────────────────────────────── */
+/* ── Skeleton loader ─────────────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
   background-size: 400% 100%;
@@ -474,7 +596,7 @@ main {
   100% { background-position: -100% 0; }
 }
 
-/* ── Spinner ─────────────────────────────────────────────────── */
+/* ── Spinner ─────────────────────────────────────────────────────────── */
 .spinner {
   width: 16px; height: 16px;
   border: 2px solid var(--border2);
@@ -484,7 +606,7 @@ main {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Empty / error states ───────────────────────────────────── */
+/* ── Empty / error states ────────────────────────────────────────────── */
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -492,7 +614,7 @@ main {
   font-size: 13px;
 }
 
-/* ── Refresh button ─────────────────────────────────────────── */
+/* ── Refresh button ──────────────────────────────────────────────────── */
 .refresh-btn {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -507,15 +629,14 @@ main {
 }
 .refresh-btn:hover { color: var(--text); border-color: var(--border2); }
 
-/* ── Animations ─────────────────────────────────────────────── */
+/* ── Animations ──────────────────────────────────────────────────────── */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 .fade-up { animation: fade-up 0.35s ease forwards; }
 
-/* ── Scrollbar ──────────────────────────────────────────────── */
+/* ── Scrollbar ───────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 3px; }
@@ -533,7 +654,7 @@ main {
       <div class="live-dot"></div>
       Live
     </div>
-    <span>बृहत्सत्म · Databricks Free Edition</span>
+    <span>बृहत्सत्म · Databricks</span>
     <span id="last-updated">—</span>
     <button class="refresh-btn" onclick="refreshAll()">↺ Refresh</button>
   </div>
@@ -541,18 +662,63 @@ main {
 
 <main>
 
-  <!-- ── Dashboard stats ──────────────────────────────────────── -->
-  <div class="section-label">System overview</div>
-  <div class="stats-row" id="stats-row">
-    <div class="stat-card urgent skeleton" style="height:100px"></div>
-    <div class="stat-card elevated skeleton" style="height:100px"></div>
-    <div class="stat-card normal skeleton" style="height:100px"></div>
-    <div class="stat-card info skeleton" style="height:100px"></div>
-    <div class="stat-card info skeleton" style="height:100px"></div>
-    <div class="stat-card skeleton" style="height:100px"></div>
+  <!-- ── Upload panel ─────────────────────────────────────────────────── -->
+  <div class="section-label">Import raw signal data</div>
+  <div class="upload-panel">
+    <div class="upload-panel-inner">
+
+      <!-- Drop zone -->
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" accept=".csv" id="file-input" onchange="onFileSelected(this)">
+        <div class="drop-icon">⬇</div>
+        <div class="drop-title">Drop your CSV here</div>
+        <div class="drop-sub">or click to browse — any number of days</div>
+        <div class="drop-file-name" id="file-name-label" style="display:none"></div>
+      </div>
+
+      <!-- Controls + progress -->
+      <div class="upload-controls">
+        <div class="upload-meta" id="upload-meta-info">
+          Required columns: <span>segment_id</span>, <span>temp_delta</span>,
+          <span>days_since_tamping</span>, <span>TGI</span>.<br>
+          Any number of days accepted — signals are aggregated per segment
+          before prediction.<br><br>
+          Pipeline runs in the background. The dashboard refreshes
+          automatically when complete.
+        </div>
+
+        <button class="upload-btn" id="upload-btn" onclick="startUpload()" disabled>
+          Run pipeline
+        </button>
+
+        <!-- Progress -->
+        <div class="progress-wrap" id="progress-wrap">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="upload-status-badge processing" id="status-badge">processing</div>
+            <span class="inf-ts" id="progress-pct">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-msg" id="progress-msg"></div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
-  <!-- ── Defect breakdown ─────────────────────────────────────── -->
+  <!-- ── Dashboard stats ──────────────────────────────────────────────── -->
+  <div class="section-label">System overview</div>
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card urgent  skeleton" style="height:100px"></div>
+    <div class="stat-card elevated skeleton" style="height:100px"></div>
+    <div class="stat-card normal  skeleton" style="height:100px"></div>
+    <div class="stat-card info    skeleton" style="height:100px"></div>
+    <div class="stat-card info    skeleton" style="height:100px"></div>
+    <div class="stat-card         skeleton" style="height:100px"></div>
+  </div>
+
+  <!-- ── Defect breakdown ──────────────────────────────────────────────── -->
   <div class="section-label" style="margin-top:8px">Defect type distribution</div>
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:32px;">
     <div class="defect-bars" id="defect-bars">
@@ -562,7 +728,7 @@ main {
     </div>
   </div>
 
-  <!-- ── Segments + detail ────────────────────────────────────── -->
+  <!-- ── Segments + detail ─────────────────────────────────────────────── -->
   <div class="section-label">
     Active segments
     <span style="color:var(--dim);font-size:10px;text-transform:none;letter-spacing:0">(urgent + watchlist only)</span>
@@ -584,26 +750,123 @@ main {
 </main>
 
 <script>
-// ── State ────────────────────────────────────────────────────────
-let predictions = [];
-let activeSegmentId = null;
+// ── State ──────────────────────────────────────────────────────────────────
+let predictions      = [];
+let activeSegmentId  = null;
+let selectedFile     = null;
+let pollInterval     = null;
 
-// ── Helpers ──────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
 function ts() {
   return new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
 }
+function defectLabel(d) { return (d || '').replace(/_/g, ' '); }
 
-function defectLabel(d) {
-  return d.replace(/_/g,' ');
+// ── Drag-and-drop wiring ───────────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) applyFile(file);
+});
+
+function onFileSelected(input) {
+  if (input.files[0]) applyFile(input.files[0]);
 }
 
-function tierColor(tier) {
-  if (tier === 'OVERDUE')  return 'var(--urgent)';
-  if (tier === 'ELEVATED') return 'var(--elevated)';
-  return 'var(--normal)';
+function applyFile(file) {
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    showUploadError('Only .csv files are accepted.');
+    return;
+  }
+  selectedFile = file;
+  dropZone.classList.add('has-file');
+  const label = document.getElementById('file-name-label');
+  label.textContent = file.name;
+  label.style.display = 'block';
+  document.querySelector('.drop-icon').textContent = '✓';
+  document.getElementById('upload-btn').disabled = false;
 }
 
-// ── Fetch dashboard stats ────────────────────────────────────────
+// ── Upload & pipeline ──────────────────────────────────────────────────────
+async function startUpload() {
+  if (!selectedFile) return;
+
+  document.getElementById('upload-btn').disabled = true;
+  showProgress(0, 'Uploading file…', 'processing');
+
+  const form = new FormData();
+  form.append('file', selectedFile);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) {
+      showUploadError(data.error || 'Upload failed.');
+      document.getElementById('upload-btn').disabled = false;
+      return;
+    }
+    // Start polling
+    pollInterval = setInterval(pollStatus, 1500);
+  } catch (e) {
+    showUploadError('Network error: ' + e.message);
+    document.getElementById('upload-btn').disabled = false;
+  }
+}
+
+async function pollStatus() {
+  try {
+    const res  = await fetch('/api/pipeline/status');
+    const data = await res.json();
+
+    showProgress(data.progress, data.progress_msg, data.status);
+
+    if (data.status === 'done') {
+      clearInterval(pollInterval);
+      pollInterval = null;
+      // Refresh dashboard after short delay
+      setTimeout(() => {
+        refreshAll();
+        document.getElementById('upload-btn').disabled = false;
+      }, 1200);
+    } else if (data.status === 'error') {
+      clearInterval(pollInterval);
+      pollInterval = null;
+      showUploadError(data.error || 'Pipeline error.');
+      document.getElementById('upload-btn').disabled = false;
+    }
+  } catch (e) { /* network hiccup — keep polling */ }
+}
+
+function showProgress(pct, msg, status) {
+  const wrap = document.getElementById('progress-wrap');
+  wrap.classList.add('visible');
+
+  const fill  = document.getElementById('progress-fill');
+  const badge = document.getElementById('status-badge');
+  const pctEl = document.getElementById('progress-pct');
+  const msgEl = document.getElementById('progress-msg');
+
+  fill.style.width = pct + '%';
+  fill.className   = 'progress-fill' + (status === 'done' ? ' done' : status === 'error' ? ' error' : '');
+  badge.className  = 'upload-status-badge ' + status;
+  badge.textContent = status;
+  pctEl.textContent = pct + '%';
+  msgEl.textContent = msg || '';
+}
+
+function showUploadError(msg) {
+  showProgress(100, '❌ ' + msg, 'error');
+}
+
+// ── Dashboard stats ────────────────────────────────────────────────────────
 async function loadDashboard() {
   try {
     const res  = await fetch('/api/dashboard');
@@ -621,15 +884,14 @@ async function loadDashboard() {
 }
 
 function renderStats(d) {
-  const row = document.getElementById('stats-row');
-  row.innerHTML = `
+  document.getElementById('stats-row').innerHTML = `
     <div class="stat-card urgent fade-up">
       <div class="stat-label">Urgent</div>
       <div class="stat-value">${d.urgent_count}</div>
       <div class="stat-sub">segments need action</div>
     </div>
     <div class="stat-card elevated fade-up" style="animation-delay:.05s">
-      <div class="stat-label">Elevated</div>
+      <div class="stat-label">Watchlist</div>
       <div class="stat-value">${d.watchlist_count}</div>
       <div class="stat-sub">watchlist segments</div>
     </div>
@@ -640,7 +902,7 @@ function renderStats(d) {
     </div>
     <div class="stat-card info fade-up" style="animation-delay:.15s">
       <div class="stat-label">Avg sim score</div>
-      <div class="stat-value">${d.avg_sim_score.toFixed(3)}</div>
+      <div class="stat-value">${(d.avg_sim_score||0).toFixed(3)}</div>
       <div class="stat-sub">retrieval quality</div>
     </div>
     <div class="stat-card info fade-up" style="animation-delay:.2s">
@@ -674,10 +936,10 @@ function renderDefectBars(breakdown) {
   `).join('');
 }
 
-// ── Fetch predictions ────────────────────────────────────────────
+// ── Predictions ────────────────────────────────────────────────────────────
 async function loadPredictions() {
   try {
-    const res  = await fetch('/api/predictions');
+    const res = await fetch('/api/predictions');
     predictions = await res.json();
     if (predictions.error) throw new Error(predictions.error);
     renderSegmentList(predictions);
@@ -693,7 +955,6 @@ function renderSegmentList(segs) {
     list.innerHTML = '<div class="empty-state">No urgent or watchlist segments — all clear.</div>';
     return;
   }
-
   list.innerHTML = segs.map((s, i) => `
     <div class="seg-card fade-up"
          data-tier="${s.escalation_tier}"
@@ -706,11 +967,11 @@ function renderSegmentList(segs) {
       </div>
       <div class="seg-meta">
         <div class="seg-meta-item">Defect <span class="seg-meta-val">${defectLabel(s.defect_type)}</span></div>
-        <div class="seg-meta-item">TGI <span class="seg-meta-val" style="color:${s.TGI < 40 ? 'var(--urgent)' : 'var(--text)'}">${s.TGI}</span></div>
+        <div class="seg-meta-item">TQI <span class="seg-meta-val" style="color:${s.TQI < 40 ? 'var(--urgent)' : 'var(--text)'}">${(s.TQI||0).toFixed(1)}</span></div>
         <div class="seg-meta-item">Tamping <span class="seg-meta-val" style="color:${s.days_since_tamping > 180 ? 'var(--elevated)' : 'var(--text)'}">${s.days_since_tamping}d</span></div>
         ${s.bridge_flag ? '<div class="seg-meta-item"><span style="color:var(--accent)">⊟ Bridge</span></div>' : ''}
       </div>
-      ${s.triggered_rules.length ? `
+      ${s.triggered_rules && s.triggered_rules.length ? `
         <div class="seg-rules">
           ${s.triggered_rules.map(r => `<span class="rule-pill">${r}</span>`).join('')}
         </div>` : ''}
@@ -718,9 +979,8 @@ function renderSegmentList(segs) {
   `).join('');
 }
 
-// ── Select segment → fetch log ───────────────────────────────────
+// ── Segment detail ─────────────────────────────────────────────────────────
 async function selectSegment(segId, el) {
-  // Update active state
   document.querySelectorAll('.seg-card').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   activeSegmentId = segId;
@@ -754,7 +1014,7 @@ function renderDetailPanel(segId, inferences) {
           <div class="detail-seg-id">${segId}</div>
           <div class="detail-defect">${defect}</div>
         </div>
-        <span class="tier-badge ${pred.escalation_tier || ''}">${pred.escalation_tier || ''}</span>
+        <span class="tier-badge ${pred.escalation_tier||''}">${pred.escalation_tier||''}</span>
       </div>
       <div class="empty-state" style="padding:40px 0">No inferences logged yet for this segment.</div>`;
     return;
@@ -766,31 +1026,31 @@ function renderDetailPanel(segId, inferences) {
         <div class="detail-seg-id">${segId}</div>
         <div class="detail-defect">${defect}</div>
       </div>
-      <span class="tier-badge ${pred.escalation_tier || ''}">${pred.escalation_tier || ''}</span>
+      <span class="tier-badge ${pred.escalation_tier||''}">${pred.escalation_tier||''}</span>
     </div>
     <div class="detail-inferences">
       ${inferences.map((inf, i) => {
-        const card   = inf.action_card || {};
-        const summary = card.action_summary || card.recommended_action || 'No summary';
+        const card    = inf.action_card || {};
+        const summary = card.recommended_action || card.action_summary || 'No summary';
         const pwmRef  = card.pwm_reference || '—';
         const sodRef  = card.sod_reference;
         const deadline = card.deadline_hours != null ? `${card.deadline_hours}h deadline` : '';
-        const speed    = card.speed_restriction_kmph ? `≤${card.speed_restriction_kmph} kmph` : '';
+        const speed    = card.speed_restriction && card.speed_restriction !== 'None'
+                         ? card.speed_restriction : '';
         const simColor = inf.top_sim_score >= 0.5 ? 'var(--accent)' :
                          inf.top_sim_score >= 0.4 ? 'var(--elevated)' : 'var(--urgent)';
-
         return `
           <div class="inference-entry fade-up" style="animation-delay:${i*0.05}s">
             <div class="inf-top">
-              <span class="inf-ts">${inf.generated_at?.slice(0,19).replace('T',' ') || '—'}</span>
-              <span class="inf-sim" style="color:${simColor}">sim ${inf.top_sim_score?.toFixed(4) || '—'}</span>
+              <span class="inf-ts">${(inf.generated_at||'').slice(0,19).replace('T',' ')}</span>
+              <span class="inf-sim" style="color:${simColor}">sim ${(inf.top_sim_score||0).toFixed(4)}</span>
             </div>
             <div class="inf-summary">${summary}</div>
             <div class="inf-refs">
               ${pwmRef !== '—' ? `<span class="ref-tag">📄 ${pwmRef}</span>` : ''}
-              ${sodRef           ? `<span class="ref-tag">📐 ${sodRef}</span>` : ''}
-              ${deadline         ? `<span class="ref-tag">⏱ ${deadline}</span>` : ''}
-              ${speed            ? `<span class="ref-tag">🚦 ${speed}</span>` : ''}
+              ${sodRef         ? `<span class="ref-tag">📐 ${sodRef}</span>` : ''}
+              ${deadline       ? `<span class="ref-tag">⏱ ${deadline}</span>` : ''}
+              ${speed          ? `<span class="ref-tag">🚦 ${speed}</span>` : ''}
               ${inf.top_chunk_sources ? `<span class="ref-tag">${inf.top_chunk_sources}</span>` : ''}
             </div>
           </div>`;
@@ -798,7 +1058,7 @@ function renderDetailPanel(segId, inferences) {
     </div>`;
 }
 
-// ── Refresh all ──────────────────────────────────────────────────
+// ── Refresh all ────────────────────────────────────────────────────────────
 async function refreshAll() {
   if (activeSegmentId) {
     const el = document.querySelector(`.seg-card[data-id="${activeSegmentId}"]`);
@@ -813,10 +1073,17 @@ async function refreshAll() {
   await Promise.all([loadDashboard(), loadPredictions()]);
 }
 
-// ── Auto-refresh every 60s ───────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
   await Promise.all([loadDashboard(), loadPredictions()]);
   setInterval(loadDashboard, 60000);
+
+  // Resume progress polling if pipeline was already running
+  const s = await fetch('/api/pipeline/status').then(r => r.json()).catch(() => null);
+  if (s && s.status === 'processing') {
+    showProgress(s.progress, s.progress_msg, 'processing');
+    pollInterval = setInterval(pollStatus, 1500);
+  }
 }
 
 init();
