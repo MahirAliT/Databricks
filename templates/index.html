@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rail-Drishti — Track Health Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0a0c0f;
+  --bg2:       #10141a;
+  --bg3:       #161c24;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.13);
+  --text:      #e8e6e0;
+  --muted:     #6b7280;
+  --dim:       #3d4450;
+
+  --urgent:    #e84040;
+  --urgent-bg: rgba(232,64,64,0.10);
+  --elevated:  #f59e0b;
+  --elev-bg:   rgba(245,158,11,0.10);
+  --normal:    #22c55e;
+  --norm-bg:   rgba(34,197,94,0.10);
+  --accent:    #38bdf8;
+  --accent-bg: rgba(56,189,248,0.10);
+
+  --font-display: 'Syne', sans-serif;
+  --font-mono:    'DM Mono', monospace;
+  --radius:       6px;
+  --radius-lg:    12px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-mono);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Scanline texture overlay ───────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.04) 2px,
+    rgba(0,0,0,0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  position: sticky; top: 0;
+  background: rgba(10,12,15,0.92);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--urgent);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+
+.logo span { color: var(--accent); }
+
+.header-meta {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--normal);
+  font-size: 11px;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--normal);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+#last-updated { color: var(--muted); }
+
+/* ── Layout ─────────────────────────────────────────────────── */
+main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 40px 80px;
+}
+
+/* ── Section label ──────────────────────────────────────────── */
+.section-label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Stat cards row ─────────────────────────────────────────── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 20px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.stat-card:hover { border-color: var(--border2); }
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--card-accent, var(--border));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.stat-card.urgent   { --card-accent: var(--urgent); }
+.stat-card.elevated { --card-accent: var(--elevated); }
+.stat-card.normal   { --card-accent: var(--normal); }
+.stat-card.info     { --card-accent: var(--accent); }
+
+.stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-card.urgent   .stat-value { color: var(--urgent); }
+.stat-card.elevated .stat-value { color: var(--elevated); }
+.stat-card.normal   .stat-value { color: var(--normal); }
+.stat-card.info     .stat-value { color: var(--accent); }
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── Defect bar chart ───────────────────────────────────────── */
+.defect-bars { margin-top: 12px; }
+
+.defect-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.defect-name {
+  width: 160px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.defect-bar-wrap {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.defect-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.22,1,0.36,1);
+  width: 0;
+}
+
+.defect-count {
+  width: 24px;
+  text-align: right;
+  color: var(--dim);
+}
+
+/* ── Two-column layout ──────────────────────────────────────── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── Segment list ───────────────────────────────────────────── */
+#segment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seg-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.seg-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--tier-color, var(--dim));
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.seg-card[data-tier="OVERDUE"]  { --tier-color: var(--urgent); }
+.seg-card[data-tier="ELEVATED"] { --tier-color: var(--elevated); }
+.seg-card[data-tier="STANDARD"] { --tier-color: var(--normal); }
+
+.seg-card:hover {
+  border-color: var(--border2);
+  background: var(--bg3);
+  transform: translateX(3px);
+}
+
+.seg-card.active {
+  border-color: var(--accent);
+  background: var(--bg3);
+}
+
+.seg-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.seg-id {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.tier-badge {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.tier-badge.OVERDUE  { background: var(--urgent-bg);  color: var(--urgent);   border: 1px solid rgba(232,64,64,0.25); }
+.tier-badge.ELEVATED { background: var(--elev-bg);    color: var(--elevated); border: 1px solid rgba(245,158,11,0.25); }
+.tier-badge.STANDARD { background: var(--norm-bg);    color: var(--normal);   border: 1px solid rgba(34,197,94,0.25); }
+
+.seg-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.seg-meta-item { display: flex; gap: 5px; align-items: center; }
+.seg-meta-val  { color: var(--text); }
+
+.seg-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.rule-pill {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(232,64,64,0.08);
+  color: #f87171;
+  border: 1px solid rgba(232,64,64,0.15);
+}
+
+/* ── Detail panel ───────────────────────────────────────────── */
+#detail-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  position: sticky;
+  top: 84px;
+  min-height: 300px;
+}
+
+.detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 260px;
+  color: var(--dim);
+  text-align: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.detail-empty-icon {
+  font-size: 28px;
+  opacity: 0.3;
+}
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-seg-id {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.detail-defect {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.detail-inferences { display: flex; flex-direction: column; gap: 12px; }
+
+.inference-entry {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.inf-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.inf-ts  { font-size: 10px; color: var(--muted); }
+.inf-sim {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.inf-summary {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.inf-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.ref-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--bg2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.detail-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ── Skeleton loader ─────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 4px;
+}
+@keyframes shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ── Spinner ─────────────────────────────────────────────────── */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Empty / error states ───────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ── Refresh button ─────────────────────────────────────────── */
+.refresh-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.05em;
+}
+.refresh-btn:hover { color: var(--text); border-color: var(--border2); }
+
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up { animation: fade-up 0.35s ease forwards; }
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Rail<span>-Drishti</span>
+  </div>
+  <div class="header-meta">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      Live
+    </div>
+    <span>बृहत्सत्म · Databricks Free Edition</span>
+    <span id="last-updated">—</span>
+    <button class="refresh-btn" onclick="refreshAll()">↺ Refresh</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Dashboard stats ──────────────────────────────────────── -->
+  <div class="section-label">System overview</div>
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card urgent skeleton" style="height:100px"></div>
+    <div class="stat-card elevated skeleton" style="height:100px"></div>
+    <div class="stat-card normal skeleton" style="height:100px"></div>
+    <div class="stat-card info skeleton" style="height:100px"></div>
+    <div class="stat-card info skeleton" style="height:100px"></div>
+    <div class="stat-card skeleton" style="height:100px"></div>
+  </div>
+
+  <!-- ── Defect breakdown ─────────────────────────────────────── -->
+  <div class="section-label" style="margin-top:8px">Defect type distribution</div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:32px;">
+    <div class="defect-bars" id="defect-bars">
+      <div class="skeleton" style="height:14px;margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:14px;margin-bottom:10px;width:80%"></div>
+      <div class="skeleton" style="height:14px;width:60%"></div>
+    </div>
+  </div>
+
+  <!-- ── Segments + detail ────────────────────────────────────── -->
+  <div class="section-label">
+    Active segments
+    <span style="color:var(--dim);font-size:10px;text-transform:none;letter-spacing:0">(urgent + watchlist only)</span>
+  </div>
+  <div class="two-col">
+    <div id="segment-list">
+      <div class="skeleton" style="height:90px;border-radius:12px;"></div>
+      <div class="skeleton" style="height:90px;border-radius:12px;margin-top:8px;"></div>
+      <div class="skeleton" style="height:90px;border-radius:12px;margin-top:8px;"></div>
+    </div>
+    <div id="detail-panel">
+      <div class="detail-empty">
+        <div class="detail-empty-icon">⬡</div>
+        <div>Select a segment<br>to view inference history</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── State ────────────────────────────────────────────────────────
+let predictions = [];
+let activeSegmentId = null;
+
+// ── Helpers ──────────────────────────────────────────────────────
+function ts() {
+  return new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+
+function defectLabel(d) {
+  return d.replace(/_/g,' ');
+}
+
+function tierColor(tier) {
+  if (tier === 'OVERDUE')  return 'var(--urgent)';
+  if (tier === 'ELEVATED') return 'var(--elevated)';
+  return 'var(--normal)';
+}
+
+// ── Fetch dashboard stats ────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const res  = await fetch('/api/dashboard');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderStats(data);
+    renderDefectBars(data.defect_breakdown);
+    document.getElementById('last-updated').textContent = 'Updated ' + ts();
+  } catch(e) {
+    document.getElementById('stats-row').innerHTML =
+      `<div style="grid-column:1/-1;color:var(--muted);font-size:12px;padding:16px">
+        Could not reach Delta table: ${e.message}
+      </div>`;
+  }
+}
+
+function renderStats(d) {
+  const row = document.getElementById('stats-row');
+  row.innerHTML = `
+    <div class="stat-card urgent fade-up">
+      <div class="stat-label">Urgent</div>
+      <div class="stat-value">${d.urgent_count}</div>
+      <div class="stat-sub">segments need action</div>
+    </div>
+    <div class="stat-card elevated fade-up" style="animation-delay:.05s">
+      <div class="stat-label">Elevated</div>
+      <div class="stat-value">${d.watchlist_count}</div>
+      <div class="stat-sub">watchlist segments</div>
+    </div>
+    <div class="stat-card normal fade-up" style="animation-delay:.1s">
+      <div class="stat-label">Normal</div>
+      <div class="stat-value">${d.normal_count}</div>
+      <div class="stat-sub">within tolerance</div>
+    </div>
+    <div class="stat-card info fade-up" style="animation-delay:.15s">
+      <div class="stat-label">Avg sim score</div>
+      <div class="stat-value">${d.avg_sim_score.toFixed(3)}</div>
+      <div class="stat-sub">retrieval quality</div>
+    </div>
+    <div class="stat-card info fade-up" style="animation-delay:.2s">
+      <div class="stat-label">Total inferences</div>
+      <div class="stat-value">${d.total_inferences}</div>
+      <div class="stat-sub">in audit log</div>
+    </div>
+    <div class="stat-card fade-up" style="animation-delay:.25s">
+      <div class="stat-label">Parse failures</div>
+      <div class="stat-value" style="color:${d.parse_failures > 0 ? 'var(--urgent)' : 'var(--dim)'}">${d.parse_failures}</div>
+      <div class="stat-sub">LLM format errors</div>
+    </div>
+  `;
+}
+
+function renderDefectBars(breakdown) {
+  const wrap = document.getElementById('defect-bars');
+  if (!breakdown || !Object.keys(breakdown).length) {
+    wrap.innerHTML = '<div style="color:var(--muted);font-size:12px">No data yet</div>';
+    return;
+  }
+  const max = Math.max(...Object.values(breakdown));
+  wrap.innerHTML = Object.entries(breakdown).map(([name, count]) => `
+    <div class="defect-row">
+      <div class="defect-name">${defectLabel(name)}</div>
+      <div class="defect-bar-wrap">
+        <div class="defect-bar-fill" style="width:${Math.round((count/max)*100)}%"></div>
+      </div>
+      <div class="defect-count">${count}</div>
+    </div>
+  `).join('');
+}
+
+// ── Fetch predictions ────────────────────────────────────────────
+async function loadPredictions() {
+  try {
+    const res  = await fetch('/api/predictions');
+    predictions = await res.json();
+    if (predictions.error) throw new Error(predictions.error);
+    renderSegmentList(predictions);
+  } catch(e) {
+    document.getElementById('segment-list').innerHTML =
+      `<div class="empty-state">Could not load predictions: ${e.message}</div>`;
+  }
+}
+
+function renderSegmentList(segs) {
+  const list = document.getElementById('segment-list');
+  if (!segs.length) {
+    list.innerHTML = '<div class="empty-state">No urgent or watchlist segments — all clear.</div>';
+    return;
+  }
+
+  list.innerHTML = segs.map((s, i) => `
+    <div class="seg-card fade-up"
+         data-tier="${s.escalation_tier}"
+         data-id="${s.segment_id}"
+         style="animation-delay:${i*0.04}s"
+         onclick="selectSegment('${s.segment_id}', this)">
+      <div class="seg-top">
+        <div class="seg-id">${s.segment_id}</div>
+        <span class="tier-badge ${s.escalation_tier}">${s.escalation_tier}</span>
+      </div>
+      <div class="seg-meta">
+        <div class="seg-meta-item">Defect <span class="seg-meta-val">${defectLabel(s.defect_type)}</span></div>
+        <div class="seg-meta-item">TGI <span class="seg-meta-val" style="color:${s.TGI < 40 ? 'var(--urgent)' : 'var(--text)'}">${s.TGI}</span></div>
+        <div class="seg-meta-item">Tamping <span class="seg-meta-val" style="color:${s.days_since_tamping > 180 ? 'var(--elevated)' : 'var(--text)'}">${s.days_since_tamping}d</span></div>
+        ${s.bridge_flag ? '<div class="seg-meta-item"><span style="color:var(--accent)">⊟ Bridge</span></div>' : ''}
+      </div>
+      ${s.triggered_rules.length ? `
+        <div class="seg-rules">
+          ${s.triggered_rules.map(r => `<span class="rule-pill">${r}</span>`).join('')}
+        </div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ── Select segment → fetch log ───────────────────────────────────
+async function selectSegment(segId, el) {
+  // Update active state
+  document.querySelectorAll('.seg-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  activeSegmentId = segId;
+
+  const panel = document.getElementById('detail-panel');
+  panel.innerHTML = `
+    <div class="detail-loading">
+      <div class="spinner"></div>
+      Loading inference log…
+    </div>`;
+
+  try {
+    const res  = await fetch(`/api/segment/${segId}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderDetailPanel(segId, data);
+  } catch(e) {
+    panel.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
+  }
+}
+
+function renderDetailPanel(segId, inferences) {
+  const panel  = document.getElementById('detail-panel');
+  const pred   = predictions.find(p => p.segment_id === segId) || {};
+  const defect = pred.defect_type ? defectLabel(pred.defect_type) : '—';
+
+  if (!inferences.length) {
+    panel.innerHTML = `
+      <div class="detail-header">
+        <div>
+          <div class="detail-seg-id">${segId}</div>
+          <div class="detail-defect">${defect}</div>
+        </div>
+        <span class="tier-badge ${pred.escalation_tier || ''}">${pred.escalation_tier || ''}</span>
+      </div>
+      <div class="empty-state" style="padding:40px 0">No inferences logged yet for this segment.</div>`;
+    return;
+  }
+
+  panel.innerHTML = `
+    <div class="detail-header fade-up">
+      <div>
+        <div class="detail-seg-id">${segId}</div>
+        <div class="detail-defect">${defect}</div>
+      </div>
+      <span class="tier-badge ${pred.escalation_tier || ''}">${pred.escalation_tier || ''}</span>
+    </div>
+    <div class="detail-inferences">
+      ${inferences.map((inf, i) => {
+        const card   = inf.action_card || {};
+        const summary = card.action_summary || card.recommended_action || 'No summary';
+        const pwmRef  = card.pwm_reference || '—';
+        const sodRef  = card.sod_reference;
+        const deadline = card.deadline_hours != null ? `${card.deadline_hours}h deadline` : '';
+        const speed    = card.speed_restriction_kmph ? `≤${card.speed_restriction_kmph} kmph` : '';
+        const simColor = inf.top_sim_score >= 0.5 ? 'var(--accent)' :
+                         inf.top_sim_score >= 0.4 ? 'var(--elevated)' : 'var(--urgent)';
+
+        return `
+          <div class="inference-entry fade-up" style="animation-delay:${i*0.05}s">
+            <div class="inf-top">
+              <span class="inf-ts">${inf.generated_at?.slice(0,19).replace('T',' ') || '—'}</span>
+              <span class="inf-sim" style="color:${simColor}">sim ${inf.top_sim_score?.toFixed(4) || '—'}</span>
+            </div>
+            <div class="inf-summary">${summary}</div>
+            <div class="inf-refs">
+              ${pwmRef !== '—' ? `<span class="ref-tag">📄 ${pwmRef}</span>` : ''}
+              ${sodRef           ? `<span class="ref-tag">📐 ${sodRef}</span>` : ''}
+              ${deadline         ? `<span class="ref-tag">⏱ ${deadline}</span>` : ''}
+              ${speed            ? `<span class="ref-tag">🚦 ${speed}</span>` : ''}
+              ${inf.top_chunk_sources ? `<span class="ref-tag">${inf.top_chunk_sources}</span>` : ''}
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ── Refresh all ──────────────────────────────────────────────────
+async function refreshAll() {
+  if (activeSegmentId) {
+    const el = document.querySelector(`.seg-card[data-id="${activeSegmentId}"]`);
+    if (el) el.classList.remove('active');
+    activeSegmentId = null;
+    document.getElementById('detail-panel').innerHTML = `
+      <div class="detail-empty">
+        <div class="detail-empty-icon">⬡</div>
+        <div>Select a segment<br>to view inference history</div>
+      </div>`;
+  }
+  await Promise.all([loadDashboard(), loadPredictions()]);
+}
+
+// ── Auto-refresh every 60s ───────────────────────────────────────
+async function init() {
+  await Promise.all([loadDashboard(), loadPredictions()]);
+  setInterval(loadDashboard, 60000);
+}
+
+init();
+</script>
+</body>
+</html>
